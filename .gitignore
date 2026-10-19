@@ -1,0 +1,34 @@
+# 本地配置（含密钥）
+config.local.yaml
+*.local.yaml
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/data/
+backend/app/static/assets/
+
+# 模型权重（可用 backend/scripts/fetch_model.py 重新下载）
+backend/models/*/*.onnx
+
+# Node
+node_modules/
+.pnpm-store/
+.probe/
+.piptmp/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# 凭据与本地密钥（永不入库）
+.env
+.env.*
+!.env.example
+*credentials*
+*.secret

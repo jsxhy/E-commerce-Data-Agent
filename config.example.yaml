@@ -1,0 +1,59 @@
+# 电商数据分析 Agent — 配置模板
+# 复制为 config.local.yaml 后按需修改；config.local.yaml 不进版本库。
+# 所有键都可用环境变量覆盖，环境变量优先级最高：
+#   ECOM_DB_URL / ECOM_LLM_API_KEY / ECOM_LLM_BASE_URL / ECOM_LLM_MODEL
+#   ECOM_JWT_SECRET / ECOM_HOST / ECOM_PORT / ECOM_STATIC_DIR
+
+app:
+  name: 电商数据分析 Agent
+  host: 127.0.0.1
+  port: 8000
+  # 前端构建产物目录（相对项目根）
+  static_dir: backend/app/static
+
+database:
+  # 默认 SQLite（本机 MySQL 数据目录无法放在含中文的工作区路径下，详见 docs/design-notes.md）
+  # 想换 MySQL 8：url: mysql+pymysql://root:password@127.0.0.1:3306/ecom?charset=utf8mb4
+  url: sqlite:///backend/data/ecom.db
+  echo: false
+
+auth:
+  jwt_secret: change-me-in-config-local
+  jwt_algorithm: HS256
+  access_token_expire_minutes: 720
+
+llm:
+  # OpenAI 兼容接口
+  base_url: https://api.deepseek.com
+  model: deepseek-chat
+  api_key: ""          # 留空则读环境变量 ECOM_LLM_API_KEY / DEEPSEEK_API_KEY
+  temperature: 0.2
+  timeout_seconds: 90
+  max_retries: 3
+
+mcp:
+  # MCP 服务挂载在 /mcp（streamable-http）；LangGraph 查询节点通过它调用工具
+  mount_path: /mcp
+  host: 127.0.0.1
+  port: 8765          # 仅 stdio/独立进程模式使用；内嵌挂载时以 app.port 为准
+
+rag:
+  model_dir: backend/models/bge-small-zh
+  persist_dir: backend/data/chroma
+  collection: reviews_demo
+  top_k: 5
+  relevant_threshold: 0.5   # 余弦距离 <= 0.5 判定相关
+
+agent:
+  # SQL 守卫
+  sql_timeout_seconds: 5
+  sql_max_rows: 200
+  sql_max_retries: 2
+  allowed_tables: [products, orders, reviews, diagnosis_reports]
+  # 动作边界：只允许这三类写操作
+  allowed_actions: [save_diagnosis_report, send_alert_notification, mark_product_pending_review]
+  # 风险判定阈值
+  risk:
+    bad_rating_max: 2            # <=2 星算差评
+    high_risk_bad_review_count: 2 # 单商品差评 >= 2 条 -> high
+    high_risk_rating_below: 2.5   # 商品均分 < 2.5 -> high
